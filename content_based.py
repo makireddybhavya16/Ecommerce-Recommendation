@@ -1,27 +1,42 @@
 import pandas as pd
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-products = pd.read_csv("clean_data.csv")
-products["Tags"] = products["Tags"].fillna("")
+# Load dataset
+df = pd.read_csv("clean_data.csv")
 
-vectorizer = TfidfVectorizer(stop_words="english")
-tag_vectors = vectorizer.fit_transform(products["Tags"])
+# Fill missing Tags
+df["Tags"] = df["Tags"].fillna("")
 
-similarity_matrix = cosine_similarity(tag_vectors, tag_vectors)
+# TF-IDF vectorizer
+tfidf = TfidfVectorizer(stop_words="english")
 
-def recommend_product(search_name, top_results=5):
-    matched_index = products[products["Name"].str.contains(search_name, case=False)].index
-    
-    if len(matched_index) == 0:
-        return "Product not found"
-    
-    product_index = matched_index[0]
-    similarity_scores = list(enumerate(similarity_matrix[product_index]))
-    similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
-    similarity_scores = similarity_scores[1:top_results+1]
-    recommended_indices = [item[0] for item in similarity_scores]
-    return products.iloc[recommended_indices][["Name","Brand"]]
+tfidf_matrix = tfidf.fit_transform(df["Tags"])
 
-if __name__ == "__main__":
-    print(recommend_product("lipstick"))
+# Similarity matrix
+cosine_sim = cosine_similarity(tfidf_matrix)
+
+
+def recommend_product(product_name):
+
+    # If product not found
+    if product_name not in df["Name"].values:
+
+        return df.head(5)
+
+    idx = df[df["Name"] == product_name].index[0]
+
+    sim_scores = list(enumerate(cosine_sim[idx]))
+
+    sim_scores = sorted(
+        sim_scores,
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    sim_scores = sim_scores[1:6]
+
+    product_indices = [i[0] for i in sim_scores]
+
+    return df.iloc[product_indices]

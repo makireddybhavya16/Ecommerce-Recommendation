@@ -1,0 +1,13 @@
+.web
+*.db
+assets/external/
+*.py[cod]
+__pycache__/
+.states
+v e n v /
+
+_ _ p y c a c h e _ _ /
+
+* . p y c
+
+
